@@ -135,12 +135,13 @@ class XrdCks :
 
     def set_fm_time(self,tm=None):
         """Set the mod time; if passed none, use now(), else tm is in dattime format"""
+        # TODO be explicit with (lack of?) timezone ... 
         if tm is None:
-            self.fm_time = datetime.datetime.utcnow()
+            self.fm_time = datetime.datetime.now()
         else:
             self.fm_time = tm
 
     def reset_timedelta(self):
         """Update the timedelta to now() - fm_time"""
-        self.cs_time = datetime.datetime.utcnow() - self.fm_time
+        self.cs_time = datetime.datetime.now() - self.fm_time
 
