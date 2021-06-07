@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+import time
 import logging,argparse,math
 
 import XrdCks,adler32
@@ -117,12 +118,13 @@ def read_file_btyes(ioctx, path, stripe_size_bytes=None, number_of_stripes=None)
 
 
 def stat(ioctx,path):
-    """Stat the first chunk
+    """Stat the first chunk, the chunk0 is added to the path
     """
 
     global chunk0
     oid = path + chunk0
     size, timestamp = ioctx.stat(oid)
+    logging.debug(f"Stat {oid}: {size}, {timestamp}")
     return size, timestamp
 
 def retrieve_xattr(ioctx,path,xattr_name='XrdCks.adler32'):
@@ -246,6 +248,9 @@ def cks_from_file(ioctx, path):
         logging.error(f"File {path} not found")
         return None
     fmtime = datetime(mtime.tm_year, mtime.tm_mon, mtime.tm_mday ,mtime.tm_hour ,mtime.tm_min ,mtime.tm_sec ) 
+    if mtime.tm_isdst():
+        fmtime = fmtime - timedelta(hours=1)
+
     logging.debug(f'Size chunk0: {size}, fmtime: {fmtime}') 
 
     # obtain the striper info, if existing; otherwise values will be None
@@ -265,7 +270,12 @@ def cks_from_file(ioctx, path):
         raise IOError(f"Mismatch in bytes read: {path}, {bytes_read}, {total_size}")
     
     # get current time 
-    now   = datetime.now()
+    #now   = datetime.now()
+    mnow  = time.localtime()
+    now = datetime(mnow.tm_year, mnow.tm_mon, mnow.tm_mday ,mnow.tm_hour ,mnow.tm_min ,mnow.tm_sec ) 
+    if mtime.tm_isdst():
+        now = now - timedelta(hours=1)
+
     delta = now - fmtime
 
     fmtime_asint = int(fmtime.timestamp())
@@ -275,3 +285,4 @@ def cks_from_file(ioctx, path):
     cks.source_type = 'file'
     cks.total_size_bytes = total_size
     return cks
+
