@@ -265,7 +265,7 @@ def cks_from_file(ioctx, path):
         raise IOError(f"Mismatch in bytes read: {path}, {bytes_read}, {total_size}")
     
     # get current time 
-    now   = datetime.utcnow()
+    now   = datetime.now()
     delta = now - fmtime
 
     fmtime_asint = int(fmtime.timestamp())
