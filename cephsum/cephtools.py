@@ -248,7 +248,7 @@ def cks_from_file(ioctx, path):
         logging.error(f"File {path} not found")
         return None
     fmtime = datetime(mtime.tm_year, mtime.tm_mon, mtime.tm_mday ,mtime.tm_hour ,mtime.tm_min ,mtime.tm_sec ) 
-    if mtime.tm_isdst():
+    if mtime.tm_isdst:
         fmtime = fmtime - timedelta(hours=1)
 
     logging.debug(f'Size chunk0: {size}, fmtime: {fmtime}') 
@@ -273,7 +273,7 @@ def cks_from_file(ioctx, path):
     #now   = datetime.now()
     mnow  = time.localtime()
     now = datetime(mnow.tm_year, mnow.tm_mon, mnow.tm_mday ,mnow.tm_hour ,mnow.tm_min ,mnow.tm_sec ) 
-    if mtime.tm_isdst():
+    if mtime.tm_isdst:
         now = now - timedelta(hours=1)
 
     delta = now - fmtime
