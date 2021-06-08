@@ -26,7 +26,9 @@ The above command should get / caclulate the checksum via whatever means, and wr
 following the XrootD XrdCks binary file format. Little-endiany
 
 ## Caveats
-
+The original gridFTP plugin uses little-endian formatting to write the binary data into the xattr. This appears to be only relevant for 
+the timestamp (fmtime) and timedelta (cstime) values. In the usual configuration, if a big-endian formatted xattr is found, it is converted to 
+little-endian and overwrites the original metadata object
 
 
 ## Examples 

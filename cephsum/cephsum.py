@@ -95,7 +95,7 @@ if __name__ == "__main__":
         raise ValueError("Need --type|-C in form adler32:<checksum> for 'check' action with source checksum value")
 
     xrdcks,adler = None,None
-    timestart_utc = datetime.utcnow()
+    timestart = datetime.now()
 
 
     cluster = cephtools.cluster_connect()
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     finally:
         cluster.shutdown()
 
-    timeend_utc = datetime.utcnow()
+    timeend = datetime.now()
     time_delta_seconds = (timeend_utc - timestart_utc).total_seconds()
 
     xrdcks_hex = "N/A" if xrdcks is None else xrdcks.get_cksum_as_hex()
