@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
 
     parser.add_argument('-a','--action',default='inget',
-                        help="""<inget>|overwrite|verify|check  Default inget: Select action to perform: depends also on -C option. 
+                        help="""<inget>|get|verify|check  Default inget: Select action to perform: depends also on -C option. 
     Possible options are:
 
     \ninget:       Get checksum from metadata, or calculate from file if not in metadata; adds to metadata, if needed. if --source is provided, non-zero error code if non-matching, and metadata not added.
