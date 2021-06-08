@@ -30,6 +30,13 @@ The original gridFTP plugin uses little-endian formatting to write the binary da
 the timestamp (fmtime) and timedelta (cstime) values. In the usual configuration, if a big-endian formatted xattr is found, it is converted to 
 little-endian and overwrites the original metadata object
 
+## tests
+Only a basic set of unit tests is currently provided; can be run for example via:
+```
+python3 -m unittest discover tests
+```
+
+
 
 ## Examples 
 
