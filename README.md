@@ -18,6 +18,17 @@ As such a few modifications to the xrootd.cfg are required.
 In addition, xrootd external checksum scripts only provide the LFN on the path, not the converted PFN. Using `-x storage.xml`, 
 this functionality can be recovered. 
 
+An example script is included in the scripts/ directory for use with xrootd
+
+Within the xrootd configuration file, the following settings are suggested (feedback on better is welcome!)
+```
+# ensure cksum adler32 is included in the tpc directive, in order to caclulate by default on transfer
+ofs.tpc cksum adler32 fcreds ?gsi =X509_USER_PROXY autorm xfr 40 pgm /etc/xrootd/xrdcp-tpc.sh
+
+# add this line to trigger external checksum calculation. Would be overwritten by other chksums
+xrootd.chksum max 50 adler32 /etc/xrootd/xrd_cephsum.sh
+```
+
 ## Basic standalone usage
 ```
 python3 cephsum.py  --action=inget -x storage.xml  dteam:test1/testfile.root
@@ -36,6 +47,8 @@ Only a basic set of unit tests is currently provided; can be run for example via
 python3 -m unittest discover tests
 ```
 
+## Scripts
+An example script is included in the scripts/ directory for use with xrootd
 
 
 ## Examples 
