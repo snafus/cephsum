@@ -117,7 +117,7 @@ if __name__ == "__main__":
         cluster.shutdown()
 
     timeend = datetime.now()
-    time_delta_seconds = (timeend_utc - timestart_utc).total_seconds()
+    time_delta_seconds = (timeend - timestart).total_seconds()
 
     xrdcks_hex = "N/A" if xrdcks is None else xrdcks.get_cksum_as_hex()
     exit_code = ERRCODE_OK
@@ -125,16 +125,23 @@ if __name__ == "__main__":
     if args.action == 'check':
         match = False if xrdcks is None or source_checksum != xrdcks_hex else True
         if not match:
-            logging.warning(f"Source checksum not matching file/stored: {source_checksum}, {xrdcks_hex}")
+            logging.error(f"Source checksum not matching file/stored: {source_checksum}, {xrdcks_hex}")
             exit_code = ERRCODE_MISMATCH_SOURCE
         else:
             logging.debug(f"Source checksum matches file/stored: {source_checksum}, {xrdcks_hex}")
+
     elif args.action == 'verify' and xrdcks is None:
         exit_code = ERRCODE_FAILED_VERIFY
     elif args.action == 'verify' and source_checksum is not None:
         match = False if source_checksum != xrdcks_hex else True
         if not match:
-            logging.warning(f"Source checksum not matching file/stored: {source_checksum}, {xrdcks_hex}")
+            logging.error(f"Source checksum not matching file/stored: {source_checksum}, {xrdcks_hex}")
+            exit_code = ERRCODE_MISMATCH_SOURCE
+    elif source_checksum is not None:
+        # eg. could be using inget, but with source value specified; need to also fail if these don't match
+        match = False if source_checksum != xrdcks_hex else True
+        if not match:
+            logging.error(f"Source checksum not matching file/stored: {pool}, {path}, {source_checksum}, {xrdcks_hex}")
             exit_code = ERRCODE_MISMATCH_SOURCE
 
 
@@ -145,7 +152,8 @@ if __name__ == "__main__":
         adler  = xrdcks.get_cksum_as_hex()
         source = xrdcks.source_type
         fbytes = xrdcks.total_size_bytes
-        logging.info(f'Result:{"Failed" if exit_code !=0 else "Done"}, pool:{pool}, path:{lfn_path}, checksum:{adler}, time_s:{time_delta_seconds}, filesize_bytes:{fbytes}, source:{source}')
+        logging.info(f'Result:{"Failed" if exit_code !=0 else "Done"}, pool:{pool}, path:{lfn_path}, checksum:{adler}, time_s:{time_delta_seconds}, '\
+                     f' filesize_bytes:{fbytes}, source:{source}, exit_code:{exit_code}, srccks:{"N/A" if source_checksum is None else source_checksum}')
         sys.stdout.write(adler + '\n')
         sys.stdout.flush()
         sys.exit(exit_code)
