@@ -8,8 +8,8 @@ following the XrootD XrdCks binary file format. Little-endian format is used; fo
 (which is likely different to the default xrdadler32 and XrdCks method.)
 
 ## dependencies
-The package was designed to rely on a minimal set of external dependencies. This is python3 only, and needs the librados python
-bindings.
+The package was designed to rely on a minimal set of external dependencies. This is python3 only (and tested only against 3.6.8 sofar)
+and needs the librados python bindings.
 
 ## Usage with xrootd
 Main motivation for this package is to replace the internal XrootD checksum implemetation with a simple external script. 
