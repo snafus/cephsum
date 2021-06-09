@@ -21,7 +21,7 @@ def send_data(data,type_name='echo_xrdcks'):
 
     try:
         req = requests.post(url=es_host+path, verify=False,
-                    json=data, timeout=2)
+                    json=params, timeout=2)
         req.raise_for_status()
     except Timeout:
         logging.warning("ES data submission hit timeout")

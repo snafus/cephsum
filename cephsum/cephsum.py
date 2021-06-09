@@ -151,7 +151,9 @@ if __name__ == "__main__":
               'pool':pool,
               'lfn':lfn_path,
               'exit_code':exit_code,
-              'srccks':"N/A" if source_checksum is None else source_checksum
+              'srccks':"N/A" if source_checksum is None else source_checksum,
+              'timestart':timestart.timestamp(),
+              'duration_s':time_delta_seconds,
             }
         if xrdcks is not None:
             vars['checksum'] = xrdcks.get_cksum_as_hex()
@@ -160,8 +162,8 @@ if __name__ == "__main__":
         try:
             from esearch import send_data
             send_data(vars)
-        except:
-            logging.warning("ESdata send failed")
+        except Exception as e:
+            logging.warning(f"ESdata send failed: {e}")
         
 
     # Write out for xrootd
