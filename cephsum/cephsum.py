@@ -36,6 +36,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-d','--debug',help='Enable additional logging',action='store_true')
     parser.add_argument('-l','--log',help='Send all logging to a dedicated file',dest='logfile',default=None)
+    parser.add_argument('-e','--es',help='Send information into elastic search. See README.md for more info',dest='send_es',action='store_true')
 
 
     parser.add_argument('-x','--lfn2pfnxml',default=None, dest='lfn2pfn_xmlfile', 
@@ -145,7 +146,23 @@ if __name__ == "__main__":
             exit_code = ERRCODE_MISMATCH_SOURCE
 
 
-
+    if args.send_es:
+        vars={'result':"Failed" if exit_code !=0 else "Done",
+              'pool':pool,
+              'lfn':lfn_path,
+              'exit_code':exit_code,
+              'srccks':"N/A" if source_checksum is None else source_checksum
+            }
+        if xrdcks is not None:
+            vars['checksum'] = xrdcks.get_cksum_as_hex()
+            vars['source']   = xrdcks.source_type
+            vars['fbytes']   = xrdcks.total_size_bytes
+        try:
+            from esearch import send_data
+            send_data(vars)
+        except:
+            logging.warning("ESdata send failed")
+        
 
     # Write out for xrootd
     if xrdcks is not None:
@@ -160,31 +177,4 @@ if __name__ == "__main__":
     else:
         logging.warning(f'Result:failed, pool:{pool}, path:{lfn_path}')
         sys.exit(ERRCODE_NO_CHECKSUM)
-
-
-
-    # parser = argparse.ArgumentParser(description='Checksum based operations for Ceph rados system; based around XrootD requirments')
-    # parser.add_argument('-l','--log',type=str,help='Checksum log file',default='/tmp/jw_checksum.log')
-    # parser.add_argument('-d','--debug',help='Enable additional logging',action='store_true')
-
-
-    # parser.add_argument('-C','--type',type=str,help='Checksum log file',default='adler32',
-    #                 help='-C {adler32 | crc32 | md5 | zcrc32 | auto}[:{<value>|print|source}] as in xrdcp options:\n'+\
-    #                 """Obtains the checksum of type (i.e. adler32, crc32, or md5) from the source, computes the checksum at the destination, and verifies that they are the same. If a value is specified, it is used as the source checksum. When print is specified, the checksum at the destination is printed but is not verified.
-                    
-    #                 Note - when in Xrootd config, -C may be added from the xrd manager
-    #                 """)
-
-
-    # parser.add_argument('-m','--mode',type=str,help="""What to do with the checksum; options [onlymetadata|onlycalc|verify|get|upget]
-    #   onlymetadata: Retrieve from metadata (via xattr). If not in xattr raise exception and exit with failure.
-    #   onlycalc:     Ignore metadata and caclulate from file; does not write anything back.
-    #   verify:       Compare metadata value to directly calculated value; If no metadata then fail.
-    #   get:          Retrieve via metadata, if exists, else calculate. Does not update
-    #   upget:        Get via whatever means, and update if metadata not existing.
-    #   force:        Force a new update into the metadata even if existing.
-    # """, default='get',)
-
-    # parser.add_argument('-t','--tfcfile',type=str,help='use a TFC storage.xml file to map input path to ceph pool and oid')
-
 
