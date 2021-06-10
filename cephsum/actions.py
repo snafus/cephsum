@@ -11,46 +11,7 @@ import cephtools
 import lfn2pfn
 
 
-def fullchain_test(ioctx, path):
-    """More for testing; run through various set of ways of getting the checksum"""
 
-    xattr_name = "XrdCks.adler32"
-    test_name = "TestJW2.adler32"
-
-    # stat
-    fsize, tstamp = cephtools.stat(ioctx, path)
-    logging.debug(fsize, tstamp)
-
-    # check metadata
-    logging.debug("\n\n========= Check Metatdata ==========")
-    cks = cephtools.cks_from_metadata(ioctx, path, xattr_name)
-    if cks is None:
-        logging.debug("No metadata")
-        #sys.exit(1)
-    else:
-        logging.debug(cks)
-        logging.debug(cks.to_binary())
-
-    logging.debug("\n\n========= Calculate ==========")
-    # calculate if needed
-    cks2 = cephtools.cks_from_file(ioctx, path)
-    logging.debug(cks2)
-
-    logging.debug("\n\n========= Write Metatdata ==========")
-    # Write metadata if requested
-    cks_binary = cks2.to_binary()
-    logging.debug(cks_binary)
-    cephtools.cks_write_metadata(ioctx, path, test_name, cks_binary, force_overwrite=True)
-
-    logging.debug("\n\n========= ReCheck Metatdata ==========")
-    #Extra check
-    cks3 = cephtools.cks_from_metadata(ioctx, path, test_name)
-    logging.debug(cks3)
-    logging.debug(cks3.to_binary() == cks2.to_binary())
-
-    adler = cks2.get_cksum_as_hex()
-
-    return adler
 
 def get_from_metatdata(ioctx, path, xattr_name = "XrdCks.adler32"):
     """Try to get checksum info from metadata only.
@@ -134,3 +95,45 @@ def verify(ioctx, path, xattr_name = "XrdCks.adler32", force_fileread=False):
     logging.info (f'{path}; Matched  : {matching}, Metadata : {"None" if xrdcks_stored is None else xrdcks_stored}, File: {"None" if xrdcks_file   is None else xrdcks_file}'  )
     return xrdcks_stored if matching else None 
 
+
+
+# def fullchain_test(ioctx, path):
+#     """More for testing; run through various set of ways of getting the checksum"""
+
+#     xattr_name = "XrdCks.adler32"
+#     test_name = "TestJW2.adler32"
+
+#     # stat
+#     fsize, tstamp = cephtools.stat(ioctx, path)
+#     logging.debug(fsize, tstamp)
+
+#     # check metadata
+#     logging.debug("\n\n========= Check Metatdata ==========")
+#     cks = cephtools.cks_from_metadata(ioctx, path, xattr_name)
+#     if cks is None:
+#         logging.debug("No metadata")
+#         #sys.exit(1)
+#     else:
+#         logging.debug(cks)
+#         logging.debug(cks.to_binary())
+
+#     logging.debug("\n\n========= Calculate ==========")
+#     # calculate if needed
+#     cks2 = cephtools.cks_from_file(ioctx, path)
+#     logging.debug(cks2)
+
+#     logging.debug("\n\n========= Write Metatdata ==========")
+#     # Write metadata if requested
+#     cks_binary = cks2.to_binary()
+#     logging.debug(cks_binary)
+#     cephtools.cks_write_metadata(ioctx, path, test_name, cks_binary, force_overwrite=True)
+
+#     logging.debug("\n\n========= ReCheck Metatdata ==========")
+#     #Extra check
+#     cks3 = cephtools.cks_from_metadata(ioctx, path, test_name)
+#     logging.debug(cks3)
+#     logging.debug(cks3.to_binary() == cks2.to_binary())
+
+#     adler = cks2.get_cksum_as_hex()
+
+#     return adler
