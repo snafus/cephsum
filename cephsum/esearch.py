@@ -1,7 +1,9 @@
 import requests,os,logging
 from requests.exceptions import Timeout
-from datetime import date
+from datetime import date,datetime
 import urllib3
+
+from socket import getfqdn
 
 # very simple module to send data via requests to elastich search instance.
 # Uses env variables to extract host name. 
@@ -19,6 +21,9 @@ def send_data(data,type_name='echo_xrdcks'):
     params = dict(data)
     params['type'] = type_name
 
+    #add some additional parameters
+    params['fqdn'] = getfqdn()
+    params['@timestamp'] = datetime.now().isoformat()
     try:
         req = requests.post(url=es_host+path, verify=False,
                     json=params, timeout=2)
