@@ -58,7 +58,6 @@ def get_from_metatdata(ioctx, path, xattr_name = "XrdCks.adler32"):
     xrdcks = cephtools.cks_from_metadata(ioctx,path,xattr_name)
     logging.info(xrdcks)
     return xrdcks  # returns None if not existing
-    #return cks.get_cksum_as_hex() if cks is not None else None 
 
 def get_from_file(ioctx, path):
     """Try to get checksum info from file only.

@@ -70,6 +70,14 @@ if __name__ == "__main__":
                     )
     #logging.debug(f'Args: {args}')
     
+    if args.send_es:
+        try:
+            from esearch import send_data
+        except Exception as e:
+            # catch errors later if a problem with ES 
+            logging.warning(f'Error importing the esearch module')
+            pass
+
     lfn_path = args.path[0]
 
     #pool, path = split_path(args.path[0]) # extract pool and path from LFN
@@ -88,9 +96,14 @@ if __name__ == "__main__":
     if checksum_alg == 'auto':
         checksum_alg = 'adler32'
     if checksum_alg != 'adler32':
+        if args.send_es:
+            try:
+                send_data({'error':"NotImplementedError",'reason':f"Alg {checksum_alg} is not implemented"})
+            except Exception as e:
+                logging.warning(f"ESdata send failed: {e}")
         raise NotImplementedError(f"Alg {checksum_alg} is not implemented")
     
-    # note, could also be print or source, or the checksum ... #FIXME
+    # note, could also be print or source, or the checksum ... #TODO
     source_checksum = None if len(cslag) < 2 else cslag[1].lower()
     if args.action == 'check' and source_checksum is None:
         raise ValueError("Need --type|-C in form adler32:<checksum> for 'check' action with source checksum value")
@@ -154,13 +167,14 @@ if __name__ == "__main__":
               'srccks':"N/A" if source_checksum is None else source_checksum,
               'timestart':timestart.timestamp(),
               'duration_s':time_delta_seconds,
+              'algorithm':checksum_alg,
+              'action':args.action,
             }
         if xrdcks is not None:
             vars['checksum'] = xrdcks.get_cksum_as_hex()
             vars['source']   = xrdcks.source_type
             vars['fbytes']   = xrdcks.total_size_bytes
         try:
-            from esearch import send_data
             send_data(vars)
         except Exception as e:
             logging.warning(f"ESdata send failed: {e}")

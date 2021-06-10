@@ -23,7 +23,7 @@ def send_data(data,type_name='echo_xrdcks'):
 
     #add some additional parameters
     params['fqdn'] = getfqdn()
-    params['@timestamp'] = datetime.now().isoformat()
+    params['@timestamp'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
     try:
         req = requests.post(url=es_host+path, verify=False,
                     json=params, timeout=2)
