@@ -16,21 +16,27 @@ def send_data(data,type_name='echo_xrdcks'):
 
     es_host = os.environ['CEPHSUM_ES_HOSTNAME']
     day = date.today().strftime("%Y.%m.%d")
-    path = f'/logstash-{day}/_doc/'
+    path = f'/logstash-{day}/doc/'
 
     params = dict(data)
+    # add any extra variables 
+    params['fqdn'] = getfqdn()
+
+    # add the type name as prefix to all varaibles 
+    for k,v in params.items():
+        params[k] = f'{type_name}_{v}' 
+    # do forget to add the type
     params['type'] = type_name
 
     #add some additional parameters
-    params['fqdn'] = getfqdn()
     params['@timestamp'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
     try:
         req = requests.post(url=es_host+path, verify=False,
                     json=params, timeout=2)
         req.raise_for_status()
+        logging.debug(f'ES data result {req.status_code}' )
     except Timeout:
         logging.warning("ES data submission hit timeout")
 
-    logging.debug(f'ES data result {req.status_code}' )
     return req
 
