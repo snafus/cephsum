@@ -21,6 +21,26 @@ ERRCODE_NO_CHECKSUM     = 102
 ERRCODE_FAILED_VERIFY   = 103
 
 
+def convert_path(path, xmlfile=None):
+    """
+    Convert  provided path (LFN) to pool and oid (PFN), using xmlfile for mapping if provided
+
+    Parameters:
+    path : input lfn path, e.g. from xrootd
+
+    xmlfile : the xrootd xml file used to define any lfn to pfn mapping
+    """
+    if xmlfile is None:
+        # No mapping to give, so assume the basic defaults
+        lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper() 
+    else:
+        lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper.from_file(args.lfn2pfn_xmlfile)
+    pool, path = lfn2pfn_converter.parse(lfn_path)
+
+    return pool, path
+
+
+
 if __name__ == "__main__":
     xattr_name = "XrdCks.adler32"
 
@@ -78,17 +98,10 @@ if __name__ == "__main__":
             logging.warning(f'Error importing the esearch module')
             pass
 
-    lfn_path = args.path[0]
 
-    #pool, path = split_path(args.path[0]) # extract pool and path from LFN
-    if args.lfn2pfn_xmlfile is None:
-        # No mapping to give, so assume the basic defaults
-        lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper() 
-    else:
-        lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper.from_file(args.lfn2pfn_xmlfile)
-    pool, path = lfn2pfn_converter.parse(lfn_path)
-    
-    #logging.debug(f'{lfn2pfn_converter}')
+    # obtain the pool and oid of the input object
+    lfn_path = args.path[0]
+    pool, path = convert_path(lfn_path, args.lfn2pfn_xmlfile)
     logging.debug(f'Converted {lfn_path} to {pool}, {path}')
 
     cslag = args.checksum_alg.split(':')
@@ -126,6 +139,7 @@ if __name__ == "__main__":
             elif args.action == 'fileonly':
                 xrdcks = actions.get_from_file(ioctx,path)    
             else:
+                logging.warning(f'Action {args.action} is not implemented')
                 raise NotImplementedError(f'Action {args.action} is not implemented')
     finally:
         cluster.shutdown()
@@ -159,6 +173,7 @@ if __name__ == "__main__":
             exit_code = ERRCODE_MISMATCH_SOURCE
 
 
+    # Prepare ES ingest, if requested
     if args.send_es:
         vars={'result':"Failed" if exit_code !=0 else "Done",
               'pool':pool,

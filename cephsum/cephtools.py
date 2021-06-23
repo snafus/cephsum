@@ -24,6 +24,7 @@ def cluster_connect(conffile = '/etc/ceph/ceph.conf',
     except Exception as e:
         # Just raise the exception for now
         # TODO add logging etc
+        logging.error(f'Could not connect to cluster',exc_info=True)
         raise e
     return cluster
 
@@ -168,13 +169,13 @@ def write_xattr(ioctx,path,xattr_name, xattr_value, force=False):
         try:
             ioctx.rm_xattr(oid, xattr_name)
         except Exception as e:
-            logging.error("Error removing existing xattr")
+            logging.error(f"Error removing existing xattr: {path}", exc_info=True)
             raise e
 
     try:
         ioctx.set_xattr(oid, xattr_name, xattr_value)
     except Exception as e:
-        logging.error("Error setting new metadata: %s" % oid)
+        logging.error("Error setting new metadata: %s" % oid, exc_info=True)
         raise e
 
     return True
