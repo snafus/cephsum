@@ -30,7 +30,8 @@ def send_data(data,type_name='echo_xrdcks'):
     params_new['type'] = type_name
 
     #add some additional parameters
-    params_new['@timestamp'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    #Try to makesure get timezone/dst setting based on machine
+    params_new['@timestamp'] = datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z")
 
     logging.debug(f'Sending to ES: {params_new}, {es_host}, {path}')
     try:
