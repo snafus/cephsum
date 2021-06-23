@@ -22,17 +22,20 @@ def send_data(data,type_name='echo_xrdcks'):
     # add any extra variables 
     params['fqdn'] = getfqdn()
 
-    # add the type name as prefix to all varaibles 
+    # add the type name as prefix to all keys 
+    params_new = {}
     for k,v in params.items():
-        params[k] = f'{type_name}_{v}' 
+        params_new[f'{type_name}_{k}'] = v 
     # do forget to add the type
-    params['type'] = type_name
+    params_new['type'] = type_name
 
     #add some additional parameters
-    params['@timestamp'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    params_new['@timestamp'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    logging.debug(f'Sending to ES: {params_new}, {es_host}, {path}')
     try:
         req = requests.post(url=es_host+path, verify=False,
-                    json=params, timeout=2)
+                    json=params_new, timeout=2)
         req.raise_for_status()
         logging.debug(f'ES data result {req.status_code}' )
     except Timeout:
