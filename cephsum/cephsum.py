@@ -58,6 +58,8 @@ if __name__ == "__main__":
     parser.add_argument('-l','--log',help='Send all logging to a dedicated file',dest='logfile',default=None)
     parser.add_argument('-e','--es',help='Send information into elastic search. See README.md for more info',dest='send_es',action='store_true')
 
+    parser.add_argument('-r','--readsize',help='Set the readsize in MiB for each chunk of data. Should be a power of 2, and near (but not larger than) the stripe size. Smaller values wll use less memory, larger sizes may have benefits in IO performance.',
+                        dest='readsize',default=64,type=int)
 
     parser.add_argument('-x','--lfn2pfnxml',default=None, dest='lfn2pfn_xmlfile', 
                         help='The storage.xml file usually provided to xrootd for lfn2pfn mapping. If not provided a simple method is used to separate the pool and object names')
@@ -98,6 +100,11 @@ if __name__ == "__main__":
             logging.warning(f'Error importing the esearch module')
             pass
 
+    # set readsize with default, or command line value, in bytes
+    readsize = args.readsize*1024*1024
+    logging.debug(f'Set Readsize to {readsize}')
+
+
 
     # obtain the pool and oid of the input object
     lfn_path = args.path[0]
@@ -129,15 +136,15 @@ if __name__ == "__main__":
     try:
         with cluster.open_ioctx(pool) as ioctx:
             if args.action in ['inget','check']:
-                xrdcks = actions.inget(ioctx,path,xattr_name)
+                xrdcks = actions.inget(ioctx,path,readsize,xattr_name)
             elif args.action == 'verify':
-                xrdcks = actions.verify(ioctx,path,xattr_name)
+                xrdcks = actions.verify(ioctx,path,readsize,xattr_name)
             elif args.action == 'get':
-                xrdcks = actions.get_checksum(ioctx,path,xattr_name)
+                xrdcks = actions.get_checksum(ioctx,path,readsize, xattr_name)
             elif args.action == 'metaonly':
                 xrdcks = actions.get_from_metatdata(ioctx,path,xattr_name)
             elif args.action == 'fileonly':
-                xrdcks = actions.get_from_file(ioctx,path)    
+                xrdcks = actions.get_from_file(ioctx,path, readsize)    
             else:
                 logging.warning(f'Action {args.action} is not implemented')
                 raise NotImplementedError(f'Action {args.action} is not implemented')

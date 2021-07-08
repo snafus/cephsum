@@ -20,28 +20,28 @@ def get_from_metatdata(ioctx, path, xattr_name = "XrdCks.adler32"):
     logging.info(xrdcks)
     return xrdcks  # returns None if not existing
 
-def get_from_file(ioctx, path):
+def get_from_file(ioctx, path, readsize):
     """Try to get checksum info from file only.
     """
-    xrdcks = cephtools.cks_from_file(ioctx,path)
+    xrdcks = cephtools.cks_from_file(ioctx,path,readsize)
     logging.info(xrdcks)
     return xrdcks  # returns None if not existing
 
-def get_checksum(ioctx, path, xattr_name = "XrdCks.adler32"):
+def get_checksum(ioctx, path, readsize, xattr_name = "XrdCks.adler32"):
     """Try to get checksum info from metadata; else use file.
     No data is writen to metadata, and no comparison is performed
     """
     source = 'metadata'
     xrdcks = get_from_metatdata(ioctx, path, xattr_name)
     if xrdcks is None:
-        xrdcks = get_from_file(ioctx, path)
+        xrdcks = get_from_file(ioctx, path,readsize)
         source = 'file'
     logging.info(f'Path:{path}; From:{source}; Checksum:{xrdcks.get_cksum_as_hex()}')
     return xrdcks 
 
 
 
-def inget(ioctx, path, xattr_name = "XrdCks.adler32",rewriteto_littleendian=True):
+def inget(ioctx, path, readsize, xattr_name = "XrdCks.adler32",rewriteto_littleendian=True):
     """Return a checksum; if in metadata, just return that. If no metadata, obtain from file and store metadata.
     If rewriteto_littleendian and metadata was stored in big endian; write it back as little endian
     """
@@ -57,7 +57,7 @@ def inget(ioctx, path, xattr_name = "XrdCks.adler32",rewriteto_littleendian=True
 
     if xrdcks is None:
         source = 'file'
-        xrdcks = cephtools.cks_from_file(ioctx, path)
+        xrdcks = cephtools.cks_from_file(ioctx, path,readsize)
         if xrdcks is None:
             logging.warning(f"No checksum possible for {path} from file")
             return None
@@ -73,7 +73,7 @@ def inget(ioctx, path, xattr_name = "XrdCks.adler32",rewriteto_littleendian=True
     return xrdcks 
 
 
-def verify(ioctx, path, xattr_name = "XrdCks.adler32", force_fileread=False):
+def verify(ioctx, path, readsize, xattr_name = "XrdCks.adler32", force_fileread=False):
     """compare the stored checksum against the file-computed value.
     If no stored metadata, still compute file (if requested), but compare as false.
     """
@@ -85,7 +85,7 @@ def verify(ioctx, path, xattr_name = "XrdCks.adler32", force_fileread=False):
     if xrdcks_stored is None and not force_fileread:
         xrdcks_file = None
     else:
-        xrdcks_file = cephtools.cks_from_file(ioctx, path)
+        xrdcks_file = cephtools.cks_from_file(ioctx, path,readsize)
 
     if xrdcks_stored is None:
         matching = False

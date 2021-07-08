@@ -7,8 +7,6 @@ import rados
 
 chunk0=f'.{0:016x}' # Chunks are hex valued
 nZeros=16
-READSIZE = 64*1024*1024 # 64MiB size for echo; default, # TODO make configurable
-#READSIZE = 4*1024*1024 # 64MiB size for echo; default, # TODO make configurable
 
 ### Admin operations
 
@@ -65,13 +63,12 @@ def get_chunks(ioctx,path, stripe_count=None):
             # read all required chunks; stop
             raise StopIteration
 
-def read_oid_bytes(ioctx,oid,stripe_size_bytes=None):
-    """Yield the bytes in a file, grouped by READSIZE and offset
+def read_oid_bytes(ioctx,oid,stripe_size_bytes=None, readsize=64*1024*1024):
+    """Yield the bytes in a file, grouped by readsize and offset
     """
-    global READSIZE
     offset = 0
-    # read at most READSIZE bytes, and stripe_size_bytes if defined
-    read_length = READSIZE if stripe_size_bytes is None else min(READSIZE,stripe_size_bytes)
+    # read at most readsize bytes, and stripe_size_bytes if defined
+    read_length = readsize if stripe_size_bytes is None else min(readsize,stripe_size_bytes)
     while True:
         try:
             buf = ioctx.read(oid, read_length, offset)
@@ -102,14 +99,14 @@ def read_oid_bytes(ioctx,oid,stripe_size_bytes=None):
 
 
 
-def read_file_btyes(ioctx, path, stripe_size_bytes=None, number_of_stripes=None):
+def read_file_btyes(ioctx, path, stripe_size_bytes=None, number_of_stripes=None,readsize=64*1024*1024):
     """Yield all bytes in a file, looping over chunks, and then bytes with the file.
 
     if stripe_size_bytes is None, will use READSIZE and read each stripe for all data.
     if stripe_size_bytes is given, will assume each chunk is the given size.
     """
     for oid in get_chunks(ioctx, path, number_of_stripes):
-        for buffer in read_oid_bytes(ioctx, oid, stripe_size_bytes):
+        for buffer in read_oid_bytes(ioctx, oid, stripe_size_bytes, readsize=readsize):
             yield buffer
     # Sanity stop statement at end.
     raise StopIteration
@@ -237,7 +234,7 @@ def cks_write_metadata(ioctx, path, xattr_name, xattr_value, force_overwrite=Fal
 
 
 
-def cks_from_file(ioctx, path):
+def cks_from_file(ioctx, path, readsize):
     """Calculate checksum from path. Returns None or checksum object
     Raise error if not existing"""
 
@@ -260,7 +257,7 @@ def cks_from_file(ioctx, path):
 
     try:
         cks_alg = adler32.adler32('adler32')
-        cks_hex = cks_alg.calc_checksum( read_file_btyes(ioctx, path, rados_object_size, num_stripes) )
+        cks_hex = cks_alg.calc_checksum( read_file_btyes(ioctx, path, rados_object_size, num_stripes,readsize) )
         bytes_read = cks_alg.bytes_read
     except Exception as e:
         raise e
