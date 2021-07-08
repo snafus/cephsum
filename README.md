@@ -25,7 +25,7 @@ Within the xrootd configuration file, the following settings are suggested (feed
 # ensure cksum adler32 is included in the tpc directive, in order to caclulate by default on transfer
 ofs.tpc cksum adler32 fcreds ?gsi =X509_USER_PROXY autorm xfr 40 pgm /etc/xrootd/xrdcp-tpc.sh
 
-# add this line to trigger external checksum calculation. Would be overwritten by other chksums
+# add this line to trigger external checksum calculation. Would be overwritten by other xrootd.chksum lines
 xrootd.chksum max 50 adler32 /etc/xrootd/xrd_cephsum.sh
 ```
 
