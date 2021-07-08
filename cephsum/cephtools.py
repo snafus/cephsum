@@ -19,11 +19,10 @@ def cluster_connect(conffile = '/etc/ceph/ceph.conf',
     # TODO can we enable this in a context managed?
 
     try:
-        cluster = rados.Rados(conffile = '/etc/ceph/ceph.conf', conf = dict (keyring = '/etc/ceph/ceph.client.xrootd.keyring'), name='client.xrootd')
+        cluster = rados.Rados(conffile = conffile, conf = dict (keyring = keyring), name=name)
         cluster.connect()
     except Exception as e:
-        # Just raise the exception for now
-        # TODO add logging etc
+        # Log and re-raise the exception for now
         logging.error(f'Could not connect to cluster',exc_info=True)
         raise e
     return cluster
