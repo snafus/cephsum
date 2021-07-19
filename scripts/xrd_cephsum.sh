@@ -13,4 +13,4 @@ ECODE=$(echo $?)
 # Must return on stdout just the checksum followed by a newline 
 printf "${RESULT}\n"
 # Exit code from the output of the python script
-exit ${ECODE)
+exit ${ECODE}
