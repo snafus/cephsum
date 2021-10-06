@@ -143,6 +143,16 @@ def retrieve_xattr(ioctx,path,xattr_name='XrdCks.adler32'):
         logging.debug("No metadata stored for %s %s",xattr_name, oid)
     return None
 
+def remove_xattr(ioctx,path,xattr_name):
+    """Remove an xattr"""
+    global chunk0
+    oid = path + chunk0
+    try:
+        ioctx.rm_xattr(oid, xattr_name)
+    except Exception as e:
+        logging.error(f"Error removing existing xattr: {path}", exc_info=True)
+        raise e
+
 
 def write_xattr(ioctx,path,xattr_name, xattr_value, force=False):
     """Write value into xattr name. If attribute already exists, only overwrite if force is True.
