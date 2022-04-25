@@ -116,6 +116,13 @@ class TestLfn2Pfn(unittest.TestCase):
         self.assertEqual(pool,'cms')
         self.assertEqual(pfn,'/store/mc/Run3Winter21DRMiniAOD/DYToLL_M-50_TuneCP5_14TeV-pythia8/GEN-SIM-DIGI-RAW/FlatPU30to80FEVT_112X_mcRun3_2021_realistic_v16-v2/70010/2bf7006f-029d-4bf2-adaa-949896f22dcb.root')
 
+    def test_atlas_with_hyphen(self):
+        c = lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper.from_string(self._test_xml)
+        pool,pfn = c.parse("atlas-localgroup:test/rucio/tests/77/1d/step14.898.10671.recon.ESD.85875.82011")
+
+        self.assertEqual(pool,'atlas-localgroup')
+        self.assertEqual(pfn,'test/rucio/tests/77/1d/step14.898.10671.recon.ESD.85875.82011')
+
 
 
 if __name__ == '__main__':

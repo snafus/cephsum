@@ -9,7 +9,7 @@ def naive_ral_split_path(input_path):
 
     Check for a CMS style path, else assume follows pool:oid logic
     """
-    nominal = re.compile("^/*(\w+):(.*)")
+    nominal = re.compile("^/*([a-zA-Z0-9_-]+):(.*)")
     cms     = re.compile("^/*(store.*)")
     m = cms.match(input_path)
     if m is not None:
@@ -49,7 +49,7 @@ class Lfn2PfnMapper:
         self.mappings = []
         self.source = None
         
-        self.nominal = re.compile("^/*(\w+):(.*)")
+        self.nominal = re.compile("^/*([a-zA-Z0-9_-]+):(.*)")
         
         pass
 
