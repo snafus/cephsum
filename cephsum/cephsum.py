@@ -81,6 +81,14 @@ if __name__ == "__main__":
     \ncheck:       Requires --source value; if not in metadata, calculate and insert to metadata if matches.  
                         """)
 
+    parser.add_argument('--cephconf',default='/etc/ceph/ceph.conf', dest='conf_file', 
+                        help='location of the ceph.conf file, if different from default')
+    parser.add_argument('--keyring',default='/etc/ceph/ceph.client.xrootd.keyring', dest='keyring_file', 
+                        help='location of the ceph keyring file, if different from default')
+    parser.add_argument('--cephuser',default='client.xrootd', dest='ceph_user', 
+                        help='ceph user name for the client keyring')
+
+
     # actual path to use, as a positional argument; only one allowed
     parser.add_argument('path', nargs=1)
 
@@ -132,7 +140,9 @@ if __name__ == "__main__":
     timestart = datetime.now()
 
 
-    cluster = cephtools.cluster_connect()
+    cluster = cephtools.cluster_connect(conffile=args.conf_file, 
+                                        keyring=args.keyring_file,
+                                        name=args.ceph_user)
     try:
         with cluster.open_ioctx(pool) as ioctx:
             if args.action in ['inget','check']:
