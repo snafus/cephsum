@@ -123,6 +123,12 @@ class TestLfn2Pfn(unittest.TestCase):
         self.assertEqual(pool,'atlas-localgroup')
         self.assertEqual(pfn,'test/rucio/tests/77/1d/step14.898.10671.recon.ESD.85875.82011')
 
+    def test_atlas_with_underscore(self):
+        c = lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper.from_string(self._test_xml)
+        pool,pfn = c.parse("atlas_localgroup:test/rucio/tests/77/1d/step14.898.10671.recon.ESD.85875.82011")
+
+        self.assertEqual(pool,'atlas_localgroup')
+        self.assertEqual(pfn,'test/rucio/tests/77/1d/step14.898.10671.recon.ESD.85875.82011')
 
 
 if __name__ == '__main__':
