@@ -65,6 +65,8 @@ class TestLfn2Pfn(unittest.TestCase):
 <!-- Below we define the mappings used for each VO as necessary, exiting on the first match -->
 <!-- CMS mapping for AAA testing -->
 <lfn-to-pfn protocol="direct" path-match="/+store/test/xrootd/T1_UK_RAL/+store/(.*)" result="cms:/store/$1"/>
+<!-- Extra example case with multiple groups to insert -->
+<lfn-to-pfn protocol="direct" path-match="/+blah/test/(.*)/+blah/(.*)" result="blah:/$1/middle/$2"/>
 <!-- CMS mapping from CMS LFNs to ECHO object names -->
 <lfn-to-pfn protocol="direct" path-match="/+store/(.*)" result="cms:/store/$1"/>
 <!-- Counter the problem with XRootD clients preceding an OID with an extraneous slash (especially an issue for TPC transfers) -->
@@ -129,6 +131,14 @@ class TestLfn2Pfn(unittest.TestCase):
 
         self.assertEqual(pool,'atlas_localgroup')
         self.assertEqual(pfn,'test/rucio/tests/77/1d/step14.898.10671.recon.ESD.85875.82011')
+
+
+    def test_multigroup(self):
+        c = lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper.from_string(self._test_xml)
+        pool,pfn = c.parse("/blah/test/path1/blah/file2")
+
+        self.assertEqual(pool,'blah')
+        self.assertEqual(pfn,'/path1/middle/file2')
 
 
 if __name__ == '__main__':

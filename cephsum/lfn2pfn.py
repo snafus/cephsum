@@ -128,7 +128,21 @@ class Lfn2PfnMapper:
             #logging.debug(f'{mapper[0]}, {match}, {pathname}')
             if match is None:
                 continue
-            newpath = mapper[1].replace('$1',match.group(1))
+            # replace occurences of $1, $2, etc. with their matching regex group
+            # e.g.: newpath = mapper[1].replace('$1',match.group(1))
+            # First extract the whole path
+            newpath = mapper[1]
+            placeholder_group = 1
+            n_groups = len(match.groups())
+            # Now loop over each $x and replace
+            while True:
+                placeholder = "${}".format(placeholder_group)
+                if not placeholder in newpath:
+                    break
+                if placeholder_group > n_groups:
+                    raise RuntimeError(f"Only {n_groups} available, but trying to replace {placeholder}")
+                newpath = newpath.replace(placeholder, match.group(placeholder_group))
+                placeholder_group += 1
             break
         else:
             # no match found in mappings, so just try with pathname
