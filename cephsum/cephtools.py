@@ -5,6 +5,10 @@ import logging,argparse,math
 import XrdCks,adler32
 import rados
 
+import queue
+from concurrent.futures import ThreadPoolExecutor, CancelledError, TimeoutError
+
+
 chunk0=f'.{0:016x}' # Chunks are hex valued
 nZeros=16
 
@@ -110,6 +114,68 @@ def read_file_btyes(ioctx, path, stripe_size_bytes=None, number_of_stripes=None,
             yield buffer
     # Sanity stop statement at end.
     raise StopIteration
+
+stop_all_workers = False
+
+def readio_mt(ioctx, oid: str, extent: slice) -> bytearray:
+    global stop_all_workers
+    if stop_all_workers: # cancellation signal
+        logging.debug(f'Got cancellation for thread: {oid}: {extent}')
+        return oid, extent, None
+    buf = ioctx.read(oid, length = extent.stop - extent.start, offset = extent.start)
+    return oid,extent, buf
+
+def read_file_btyes_multithreaded(ioctx, path, stripe_size_bytes=None, number_of_stripes=None,readsize=64*1024*1024, max_workers=1):
+    """Yield all bytes in a file, looping over chunks, and then bytes with the file using a multi-threaded threadpool
+
+    if stripe_size_bytes is None, will use READSIZE and read each stripe for all data.
+    if stripe_size_bytes is given, will assume each chunk is the given size.
+    """
+    assert stripe_size_bytes is not None # must know the number of bytes per chunk here
+    assert number_of_stripes is not None # must know the number of chunks here
+    assert readsize <= stripe_size_bytes # only read at most the number of bytes in a chunk
+    assert stripe_size_bytes % readsize == 0 # 
+    
+    futures = queue.deque()
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # load up the deque will all the slices
+        # get_chunks does a stat on each file to check for existence (what if the file is deleted mid read?)
+        for oid in get_chunks(ioctx, path, number_of_stripes):
+            # assume we read all of a chunk; sort out the final chunks possible reduced size later. 
+            # create a iterable of slices corresponding to the reads within each chunk
+            for extent in map(lambda offset: slice(offset,offset+readsize,None),  range(0, stripe_size_bytes, readsize)):
+                futures.append(executor.submit(readio_mt, ioctx, oid, extent)  )
+
+        # wait for the ordered futures to completed:
+        global stop_all_workers
+        while True:
+            try:
+                f = futures.popleft()
+            except IndexError: # no more entries
+                break
+            try:
+                oid, extent, buf =  f.result(timeout=120)  # return the buffer of bytes
+                logging.debug(f"Result for {oid} {extent} {'None' if buf is None else len(buf)}")
+            except TimeoutError:
+                logging.error("Reached read timeout; aborting")
+                stop_all_workers = True
+                raise TimeoutError()
+
+
+            except CancelledError:
+                logging.debug(f'Got Cancelled error; aborted the remaining tasks')
+
+            if buf is None or len(buf) == 0:
+                # a problem or were at the end; cancel the other 
+                # global stop_all_workers
+                stop_all_workers = True
+                logging.debug(f"Got 0 len array; stop all workers")
+
+                continue # don't yield below, but make sure we pop all the futures
+            yield buf
+
+    #raise StopIteration
+    ## Sanity stop statement at end.
 
 
 
@@ -234,7 +300,7 @@ def cks_write_metadata(ioctx, path, xattr_name, xattr_value, force_overwrite=Fal
 
 
 
-def cks_from_file(ioctx, path, readsize):
+def cks_from_file(ioctx, path, readsize, use_multithreading=False, max_workers=1):
     """Calculate checksum from path. Returns None or checksum object
     Raise error if not existing"""
 
@@ -257,7 +323,10 @@ def cks_from_file(ioctx, path, readsize):
 
     try:
         cks_alg = adler32.adler32('adler32')
-        cks_hex = cks_alg.calc_checksum( read_file_btyes(ioctx, path, rados_object_size, num_stripes,readsize) )
+        if use_multithreading:
+            cks_hex = cks_alg.calc_checksum( read_file_btyes_multithreaded(ioctx, path, rados_object_size, num_stripes,readsize, max_workers) )
+        else:
+            cks_hex = cks_alg.calc_checksum( read_file_btyes(ioctx, path, rados_object_size, num_stripes,readsize) )
         bytes_read = cks_alg.bytes_read
     except Exception as e:
         raise e
