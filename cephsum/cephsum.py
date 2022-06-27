@@ -88,6 +88,10 @@ if __name__ == "__main__":
     parser.add_argument('--cephuser',default='client.xrootd', dest='ceph_user', 
                         help='ceph user name for the client keyring')
 
+    parser.add_argument('--mt',default=False,help='Use multithreading',action='store_true')
+    parser.add_argument('--workers',default=1,type=int,help='If multithreading, specify the max number of workers')
+    
+
 
     # actual path to use, as a positional argument; only one allowed
     parser.add_argument('path', nargs=1)
@@ -136,6 +140,10 @@ if __name__ == "__main__":
     if args.action == 'check' and source_checksum is None:
         raise ValueError("Need --type|-C in form adler32:<checksum> for 'check' action with source checksum value")
 
+
+    use_multithreading = args.mt
+    mt_workers = args.workers
+
     xrdcks,adler = None,None
     timestart = datetime.now()
 
@@ -146,15 +154,15 @@ if __name__ == "__main__":
     try:
         with cluster.open_ioctx(pool) as ioctx:
             if args.action in ['inget','check']:
-                xrdcks = actions.inget(ioctx,path,readsize,xattr_name)
+                xrdcks = actions.inget(ioctx,path,readsize,xattr_name, use_multithreading=use_multithreading, mt_workers=mt_workers)
             elif args.action == 'verify':
-                xrdcks = actions.verify(ioctx,path,readsize,xattr_name)
+                xrdcks = actions.verify(ioctx,path,readsize,xattr_name, use_multithreading=use_multithreading, mt_workers=mt_workers)
             elif args.action == 'get':
-                xrdcks = actions.get_checksum(ioctx,path,readsize, xattr_name)
+                xrdcks = actions.get_checksum(ioctx,path,readsize, xattr_name, use_multithreading=use_multithreading, mt_workers=mt_workers)
             elif args.action == 'metaonly':
                 xrdcks = actions.get_from_metatdata(ioctx,path,xattr_name)
             elif args.action == 'fileonly':
-                xrdcks = actions.get_from_file(ioctx,path, readsize)    
+                xrdcks = actions.get_from_file(ioctx,path, readsize, use_multithreading=use_multithreading, mt_workers=mt_workers)    
             else:
                 logging.warning(f'Action {args.action} is not implemented')
                 raise NotImplementedError(f'Action {args.action} is not implemented')

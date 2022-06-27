@@ -44,14 +44,18 @@ class adler32():
         value  = 1 # initilising value
         bytes_read = 0
         counter = 0
-        for buf in buffer:
-            # need to consider intra-file chunks
-            value = zlib.adler32( buf, value)
-            bytes_read += len(buf)
-            counter += 1
-            if self.log_each_step:
-                logging.debug('%s: %s %s %s' % (self.name, self.adler32_inttohex(value), len(buf), bytes_read) )
-        
+        try:
+            for buf in buffer:
+                # need to consider intra-file chunks
+                value = zlib.adler32( buf, value)
+                bytes_read += len(buf)
+                counter += 1
+                if self.log_each_step:
+                    logging.debug('%s: %s %s %s' % (self.name, self.adler32_inttohex(value), len(buf), bytes_read) )
+        except StopIteration:
+            logging.debug(f"Got Stopiteration after: {bytes_read} bytes")
+
+
         self.value      = self.adler32_inttohex(value)
         self.bytes_read = bytes_read
         self.number_buffers = counter
