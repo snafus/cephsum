@@ -36,6 +36,14 @@ class TestAdler32(unittest.TestCase):
         val = alg.calc_checksum(b'')
         self.assertEqual(val,'00000001')
 
+    def test_btyesread_list0(self):
+        """
+        Test a 0 byte checksum
+        """
+        alg = adler32.adler32()
+        val = alg.calc_checksum([b''])
+        self.assertEqual(val,'00000001')
+
     def test_bytesread(self):
         """
         Test a byte checksum
@@ -43,6 +51,15 @@ class TestAdler32(unittest.TestCase):
         alg = adler32.adler32()
         val = alg.calc_checksum([b'1234'])
         self.assertEqual(val,'01f800cb')
+
+    def test_bytesreadmulti(self):
+        """
+        Test a byte checksum
+        """
+        alg = adler32.adler32()
+        val = alg.calc_checksum([b'1',b'2',b'3',b'4'])
+        self.assertEqual(val,'01f800cb')
+
 
 class TestXrdCks(unittest.TestCase):
     def test_from_binary(self):
@@ -140,6 +157,14 @@ class TestLfn2Pfn(unittest.TestCase):
         self.assertEqual(pool,'blah')
         self.assertEqual(pfn,'/path1/middle/file2')
 
+    def test_opaqueinfo(self):
+        c = lfn2pfn_converter = lfn2pfn.Lfn2PfnMapper.from_string(self._test_xml)
+        pool,pfn = c.parse("atlas:datadisk/rucio/mc15_13TeV/05/00/log.29765575._051322.job.log.tgz.1?cks.type=md5&xrd.gsiusrpxy=/var/lib/condor/execute/dir_76528/user.proxy&xrd.wantprot=gsi,unix")
+
+        self.assertEqual(pool,'atlas')
+        self.assertEqual(pfn,'datadisk/rucio/mc15_13TeV/05/00/log.29765575._051322.job.log.tgz.1')
+        # needs to test / assert that this was an md5 request and fails also
+        self.assertEqual("adler32","md5")
 
 if __name__ == '__main__':
     unittest.main()
